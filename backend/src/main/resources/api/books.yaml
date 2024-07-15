@@ -1,0 +1,158 @@
+openapi: 3.0.3
+
+info:
+  version: 0.0.1
+  title: Book Library
+  description: An API to manage books in the library.
+
+servers:
+  - url: 'http://localhost:8080'
+
+paths:
+  /books:
+    get:
+      operationId: getBooks
+      summary: Returns a list of all books in the library.
+      responses:
+        '200':
+          description: A JSON array of books
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Books'
+
+    post:
+      operationId: createBook
+      summary: Adds a new book to the library.
+      requestBody:
+        description: The details of the book to be added.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewBook'
+      responses:
+        '201':
+          description: Book successfully created - returns the details of the book with a generated ID.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+        '422':
+          description: Unprocessable Entity - the provided book was not valid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrors'
+
+
+  /books/{bookId}:
+    get:
+      operationId: getBook
+      summary: Returns the details of the book with the given ID
+      parameters:
+        - in: path
+          name: bookId
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: The unique identifer of the book to be retrieved
+      responses:
+        '200':
+          description: Successful request - returns a JSON representation of a book.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+        '404':
+          description: A book with the given ID was not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+
+components:
+  schemas:
+    Book:
+      type: object
+      properties:
+        id:
+          description: The unique identifier of the book in the library
+          type: string
+          format: uuid
+        title:
+          description: The title of the book
+          type: string
+        author:
+          description: The author of the book
+          type: string
+        publishedOn:
+          description: The date the book was published in ISO 8601 full-date format
+          type: string
+          format: date
+          example: '2020-07-23'
+      required:
+        - id
+        - title
+        - author
+        - publishedOn
+
+    Books:
+      type: object
+      properties:
+        list:
+          type: array
+          items:
+            $ref: '#/components/schemas/Book'
+
+    NewBook:
+      type: object
+      properties:
+        title:
+          description: The title of the book
+          type: string
+          minLength: 1
+          maxLength: 70
+        author:
+          description: The author of the book
+          type: string
+        publishedOn:
+          description: The date the book was published in ISO 8601 full-date format
+          type: string
+          format: date
+          example: '2020-07-23'
+      required:
+        - title
+        - author
+        - publishedOn
+
+    ValidationErrors:
+      description: Validation errors for each field.
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationError'
+
+    ValidationError:
+      description: A specific field validation error.
+      type: object
+      properties:
+        fieldName:
+          type: string
+        message:
+          type: string
+      required:
+        - fieldName
+        - message
+
+    StandardError:
+      type: object
+      properties:
+        errorMessage:
+          description: Some detail about the error that has occurred.
+          type: string
+      required:
+        - errorMessage
