@@ -41,13 +41,16 @@ class BooksControllerIT {
   @Test
   void getBooks_validRequest_returnsExampleBooks() {
     var response = restTemplate.getForEntity("/books", Books.class);
+
     var booksList = response.getBody()
                             .getList();
 
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    assertThat(booksList).hasSize(1);
+    assertThat(booksList).hasSize(2);
     assertThat(booksList.get(0)
                         .getTitle()).isEqualTo("My book");
+    assertThat(booksList.get(1)
+                        .getTitle()).isEqualTo("Someone's book");
   }
 
 }
