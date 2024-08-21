@@ -90,6 +90,20 @@
               </configOptions>
             </configuration>
           </execution>
+
+          <execution>
+            <id>generate-postman</id>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <inputSpec>${project.basedir}/src/main/resources/api/books.yaml</inputSpec>
+              <generatorName>postman-collection</generatorName>
+              <output>${project.basedir}/postman</output>
+              <configOptions>
+              </configOptions>
+            </configuration>
+          </execution>
         </executions>
       </plugin>
     </plugins>
