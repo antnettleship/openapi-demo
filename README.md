@@ -15,6 +15,7 @@ The openapi spec is defined in [backend/src/main/resources/api/books.yaml](backe
 - Controller Interface, which is implemented in BooksController.
 - DTOs including validation annotations.
 - This generated code can be found in [backend/target/generated-sources/openapi/java](backend/target/generated-sources/openapi/java)
+- Postman collection [backend/postman](backend/postman)
 
 Note: This can be configured to build and publish a separate jar rather than local files (e.g. if required by another Java client service).
 
