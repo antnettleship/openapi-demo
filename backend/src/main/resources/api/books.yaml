@@ -1,0 +1,215 @@
+openapi: 3.1.0
+
+info:
+  version: 0.0.1
+  title: Book Library
+  description: An API to manage books in the library.
+
+servers:
+  - url: 'http://localhost:8080'
+
+paths:
+  /books:
+    get:
+      operationId: getBooks
+      summary: Returns a list of all books in the library.
+      responses:
+        '200':
+          description: A JSON array of books
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetBooksResponse'
+              examples:
+                oneBook:
+                  summary: Sample response with one book
+                  value:
+                    books:
+                      - isbn: '978-3-16-148410-0'
+                        title: 'The Great Gatsby'
+                        author: 'F. Scott Fitzgerald'
+                        category: FICTION
+                        publishedOn: '1925-04-10'
+        '400':
+          description: Bad Request - the request was not valid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+        '500':
+          description: Internal Server Error - an unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+      parameters:
+        - $ref: '#/components/parameters/XRequestId' # Example of a required header
+
+    post:
+      operationId: createBook
+      summary: Adds a new book to the library.
+      requestBody:
+        description: The details of the book to be added.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBookRequest'
+      responses:
+        '201':
+          description: Book successfully created - returns the details of the book with a generated ID.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateBookResponse'
+        '422':
+          description: Unprocessable Entity - the request was well-formed, but the provided book was not valid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrors'
+        '400':
+          description: Bad Request - the request was not valid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+        '500':
+          description: Internal Server Error - an unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+      parameters:
+        - $ref: '#/components/parameters/XRequestId'
+
+components:
+  parameters:
+    XRequestId:
+      name: X-Request-ID
+      in: header
+      description: A unique identifier for the request, used for tracing and debugging.
+      required: true
+      schema:
+        type: string
+
+  schemas:
+
+    GetBooksResponse:
+      type: object
+      properties:
+        books:
+          type: array
+          items:
+            $ref: '#/components/schemas/Book'
+
+    CreateBookRequest:
+      # Custom class-level annotation to fill the gap in validation for the fantasyCategory field
+      x-class-extra-annotation: "@com.example.openapidemo.web.validation.ValidFantasyCategory"
+      allOf:
+        - $ref: '#/components/schemas/Book'
+
+    CreateBookResponse:
+      allOf:
+        - $ref: '#/components/schemas/Book'
+
+    Book:
+      type: object
+      properties:
+        isbn:
+          description: |
+            An International Standard Book Number (ISBN) is a unique commercial identifier for books, used by publishers, libraries, and retailers to track inventory and specific editions. Supports both ISBN-10 and ISBN-13 formats, with or without hyphens.
+            There are two valid formats for ISBNs:
+            1. ISBN-10: A 10-character format that consists of 9 digits followed by either a digit or an 'X' (which represents the value 10). It can be written with or without hyphens. For example, both "0306406152" and "0-306-40615-2" are valid ISBN-10 formats.
+            2. ISBN-13: A 13-digit format that consists of 13 digits, typically starting with "978" or "979". It can also be written with or without hyphens. For example, both "9780306406157" and "978-0-306-40615-7" are valid ISBN-13 formats.
+          type: string
+          pattern: '^(?:\d{9}[\dX]|\d{1,5}-\d{1,7}-\d{1,6}-[\dX]|\d{13}|\d{3}-\d{1,5}-\d{1,7}-\d{1,6}-\d)$'
+        title:
+          description: The title of the book
+          type: string
+          minLength: 1
+          maxLength: 70
+        author:
+          description: The author of the book
+          type: string
+        category:
+          description: The category of the book
+          type: string
+          enum:
+            - FICTION
+            - NON_FICTION
+            - SCIENCE
+            - HISTORY
+            - FANTASY
+            - BIOGRAPHY
+        fantasyCategory:
+          description: The fantasy category of the book (required if category is FANTASY)
+          type: string
+          enum:
+            - HIGH
+            - LOW
+            - URBAN
+            - DARK
+        publishedOn:
+          description: |
+            The date the book was published in ISO 8601 full-date format.
+          type: string
+          format: date
+          # OpenAPI doesn't support validations beyond structure/syntax, such as date must be in the future.
+          # This is one option for adding additional input validation to the generated model, but leaks java-specific details into the API spec.
+          # Service-level validation, or subclassing the generated DTOs are other options.
+          x-field-extra-annotation: "@PastOrPresent"
+          example: '2020-07-23'
+        price:
+          description: The price of the book in GBP (optional).
+          type: number
+          format: double # Generated as BigDecimal for precision, see pom.xml
+          minimum: 0
+      required:
+        - isbn
+        - title
+        - author
+        - category
+        - publishedOn
+      allOf:
+        # This is new in OpenAPI 3.1 - allows the expression of conditional validation based on the value of another field.
+        # However, the generator does not support this yet.
+        # See CreateBookRequest for an alternative approach to implementing this validation.
+        - if:
+            properties:
+              category:
+                const: FANTASY
+          then:
+            required:
+              - fantasyCategory
+
+
+    ValidationErrors:
+      description: Validation errors for each field.
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationError'
+
+    ValidationError:
+      description: A specific field validation error.
+      type: object
+      properties:
+        fieldName:
+          type: string
+        message:
+          type: string
+      required:
+        - fieldName
+        - message
+
+    StandardError:
+      type: object
+      properties:
+        errorMessage:
+          description: Some detail about the error that has occurred.
+          type: string
+      required:
+        - errorMessage

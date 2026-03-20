@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>3.5.11</version>
+  </parent>
+  <groupId>com.example</groupId>
+  <artifactId>openapidemo</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <name>openapidemo</name>
+  <description>Demo project for OpenAPI with code generation</description>
+  <properties>
+    <java.version>21</java.version>
+  </properties>
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-validation</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>io.swagger.core.v3</groupId>
+      <artifactId>swagger-annotations</artifactId>
+      <version>2.2.45</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>1.18.44</version>
+    </dependency>
+
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+      </plugin>
+
+      <!--
+        Lots of configuration options for generation,
+        see https://github.com/OpenAPITools/openapi-generator/blob/master/docs/generators/spring.md
+      -->
+      <plugin>
+        <groupId>org.openapitools</groupId>
+        <artifactId>openapi-generator-maven-plugin</artifactId>
+        <version>7.20.0</version>
+        <executions>
+          <execution>
+            <id>generate-java</id>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <inputSpec>${project.basedir}/src/main/resources/api/books.yaml</inputSpec>
+              <generatorName>spring</generatorName>
+              <output>${project.build.directory}/generated-sources/openapi/java</output>
+
+              <!-- Ensure our price is generated as a BigDecimal, not a Double, to avoid precision issues. -->
+              <typeMappings>
+                <typeMapping>Double=java.math.BigDecimal</typeMapping>
+              </typeMappings>
+
+              <configOptions>
+                <sourceFolder>src/gen/java/main</sourceFolder>
+                <apiPackage>com.example.openapidemo.generated.api</apiPackage>
+                <modelPackage>com.example.openapidemo.generated.dto</modelPackage>
+                <useSpringBoot3>true</useSpringBoot3>
+
+                <!-- Only generated controller interfaces, not full implementations. We want to enforce the contract while having control over implementation. -->
+                <interfaceOnly>true</interfaceOnly>
+                <skipDefaultInterface>true</skipDefaultInterface>
+
+                <generateBuilders>true</generateBuilders>
+                <openApiNullable>false</openApiNullable>
+              </configOptions>
+            </configuration>
+          </execution>
+
+          <!-- Example of also generating TypeScript types and client for use on the frontend -->
+          <execution>
+            <id>generate-typescript</id>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <inputSpec>${project.basedir}/src/main/resources/api/books.yaml</inputSpec>
+              <generatorName>typescript-fetch</generatorName>
+              <output>${project.basedir}/../frontend/lib/generated/openapi</output>
+              <configOptions>
+              </configOptions>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>generate-postman</id>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <inputSpec>${project.basedir}/src/main/resources/api/books.yaml</inputSpec>
+              <generatorName>postman-collection</generatorName>
+              <output>${project.basedir}/postman</output>
+              <configOptions>
+              </configOptions>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>
